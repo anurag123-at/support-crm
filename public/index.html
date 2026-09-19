@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support CRM Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-lg">CRM</div>
+        <h1 class="text-xl font-bold text-slate-900">Customer Support Ticketing</h1>
+      </div>
+      <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition">
+        + New Ticket
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    
+    <!-- Metric Summary Cards (Bonus Feature) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase text-slate-400">Total Tickets</p>
+          <h3 id="statTotal" class="text-2xl font-bold text-slate-800">0</h3>
+        </div>
+        <div class="bg-indigo-50 text-indigo-600 p-3 rounded-lg font-bold">📊</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase text-amber-500">Open Tickets</p>
+          <h3 id="statOpen" class="text-2xl font-bold text-slate-800">0</h3>
+        </div>
+        <div class="bg-amber-50 text-amber-600 p-3 rounded-lg font-bold">📂</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase text-blue-500">In Progress</p>
+          <h3 id="statInProgress" class="text-2xl font-bold text-slate-800">0</h3>
+        </div>
+        <div class="bg-blue-50 text-blue-600 p-3 rounded-lg font-bold">⏳</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase text-emerald-500">Closed Tickets</p>
+          <h3 id="statClosed" class="text-2xl font-bold text-slate-800">0</h3>
+        </div>
+        <div class="bg-emerald-50 text-emerald-600 p-3 rounded-lg font-bold">✅</div>
+      </div>
+    </div>
+
+    <!-- Controls (Search & Filters) -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <!-- Search -->
+      <div class="w-full md:w-96">
+        <input type="text" id="searchInput" placeholder="Search by name, ID, email, priority..." oninput="loadDashboard()" 
+          class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+      </div>
+      <!-- Status Filters -->
+      <div class="flex space-x-2 w-full md:w-auto overflow-x-auto">
+        <button onclick="filterStatus('All')" id="btn-All" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-700 transition">All</button>
+        <button onclick="filterStatus('Open')" id="btn-Open" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Open</button>
+        <button onclick="filterStatus('In Progress')" id="btn-In Progress" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">In Progress</button>
+        <button onclick="filterStatus('Closed')" id="btn-Closed" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Closed</button>
+      </div>
+    </div>
+
+    <!-- Tickets Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th class="p-4">Ticket ID</th>
+              <th class="p-4">Customer Name</th>
+              <th class="p-4">Subject</th>
+              <th class="p-4">Priority</th>
+              <th class="p-4">Status</th>
+              <th class="p-4">Date Created</th>
+              <th class="p-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="ticketTableBody" class="divide-y divide-slate-200 text-sm">
+            <!-- Dynamic Rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Ticket Modal -->
+  <div id="createModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-slate-900">Create New Support Ticket</h2>
+        <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+      </div>
+      <form id="createForm" onsubmit="submitTicket(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Customer Name</label>
+          <input type="text" id="customer_name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Customer Email</label>
+          <input type="email" id="customer_email" required placeholder="example@domain.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject</label>
+          <input type="text" id="subject" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Priority Level</label>
+          <select id="priority" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Description</label>
+          <textarea id="description" rows="3" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeCreateModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Submit Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detail & Update Modal -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <div>
+          <span id="detailTicketId" class="text-xs font-bold text-indigo-600 uppercase"></span>
+          <h2 id="detailSubject" class="text-xl font-bold text-slate-900"></h2>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 mb-4 bg-slate-50 p-3 rounded-lg text-sm">
+        <div><span class="text-slate-500 font-medium">Customer:</span> <span id="detailCustomer" class="font-semibold text-slate-800"></span></div>
+        <div><span class="text-slate-500 font-medium">Email:</span> <span id="detailEmail" class="font-semibold text-slate-800"></span></div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-xs font-semibold text-slate-500 uppercase mb-1">Description</h3>
+        <p id="detailDescription" class="text-sm bg-slate-50 p-3 rounded-lg text-slate-700 whitespace-pre-wrap"></p>
+      </div>
+
+      <!-- Update Form -->
+      <form onsubmit="updateTicket(event)" class="space-y-4 border-t pt-4">
+        <input type="hidden" id="activeTicketId">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Update Status</label>
+            <select id="updateStatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Update Priority</label>
+            <select id="updatePriority" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Add Note / Comment</label>
+          <textarea id="updateNotes" rows="2" placeholder="Add an internal note..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+
+        <!-- Notes History -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase mb-2">Activity Notes</h3>
+          <div id="notesHistory" class="space-y-2 max-h-40 overflow-y-auto"></div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeDetailModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript App Logic -->
+  <script>
+    let currentStatusFilter = 'All';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+    });
+
+    function loadDashboard() {
+      fetchTickets();
+      fetchStats();
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const stats = await res.json();
+        document.getElementById('statTotal').innerText = stats.total;
+        document.getElementById('statOpen').innerText = stats.open;
+        document.getElementById('statInProgress').innerText = stats.in_progress;
+        document.getElementById('statClosed').innerText = stats.closed;
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    }
+
+    async function fetchTickets() {
+      const search = document.getElementById('searchInput').value;
+      let url = `/api/tickets?status=${currentStatusFilter}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      try {
+        const res = await fetch(url);
+        const tickets = await res.json();
+        const tbody = document.getElementById('ticketTableBody');
+        tbody.innerHTML = '';
+
+        if (tickets.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">No tickets found.</td></tr>`;
+          return;
+        }
+
+        tickets.forEach(t => {
+          let badgeColor = 'bg-amber-100 text-amber-700';
+          if (t.status === 'In Progress') badgeColor = 'bg-blue-100 text-blue-700';
+          if (t.status === 'Closed') badgeColor = 'bg-emerald-100 text-emerald-700';
+
+          let priorityColor = 'bg-slate-100 text-slate-700';
+          if (t.priority === 'Medium') priorityColor = 'bg-amber-50 text-amber-600';
+          if (t.priority === 'High') priorityColor = 'bg-rose-50 text-rose-600 font-semibold';
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50/80 transition cursor-pointer" onclick="openDetailModal('${t.ticket_id}')">
+              <td class="p-4 font-mono font-semibold text-indigo-600">${t.ticket_id}</td>
+              <td class="p-4 font-medium text-slate-900">${t.customer_name}</td>
+              <td class="p-4 text-slate-600 truncate max-w-xs">${t.subject}</td>
+              <td class="p-4"><span class="px-2 py-0.5 rounded text-xs ${priorityColor}">${t.priority || 'Medium'}</span></td>
+              <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor}">${t.status}</span></td>
+              <td class="p-4 text-slate-400 text-xs">${new Date(t.created_at).toLocaleString()}</td>
+              <td class="p-4 text-right">
+                <button class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">View &rarr;</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error('Error fetching tickets:', err);
+      }
+    }
+
+    function filterStatus(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.className = "filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+      });
+      const activeBtn = document.getElementById(`btn-${status}`);
+      if(activeBtn) activeBtn.className = "filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-700 transition";
+      fetchTickets();
+    }
+
+    function openCreateModal() {
+      document.getElementById('createModal').classList.remove('hidden');
+      document.getElementById('createModal').classList.add('flex');
+    }
+
+    function closeCreateModal() {
+      document.getElementById('createModal').classList.remove('flex');
+      document.getElementById('createModal').classList.add('hidden');
+      document.getElementById('createForm').reset();
+    }
+
+    async function submitTicket(e) {
+      e.preventDefault();
+      const payload = {
+        customer_name: document.getElementById('customer_name').value,
+        customer_email: document.getElementById('customer_email').value,
+        subject: document.getElementById('subject').value,
+        priority: document.getElementById('priority').value,
+        description: document.getElementById('description').value
+      };
+
+      const res = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        closeCreateModal();
+        loadDashboard();
+      } else {
+        alert('Failed to create ticket');
+      }
+    }
+
+    async function openDetailModal(ticketId) {
+      const res = await fetch(`/api/tickets/${ticketId}`);
+      if (!res.ok) return alert('Could not fetch ticket details');
+      const t = await res.json();
+
+      document.getElementById('activeTicketId').value = t.ticket_id;
+      document.getElementById('detailTicketId').innerText = t.ticket_id;
+      document.getElementById('detailSubject').innerText = t.subject;
+      document.getElementById('detailCustomer').innerText = t.customer_name;
+      document.getElementById('detailEmail').innerText = t.customer_email;
+      document.getElementById('detailDescription').innerText = t.description;
+      document.getElementById('updateStatus').value = t.status;
+      document.getElementById('updatePriority').value = t.priority || 'Medium';
+      document.getElementById('updateNotes').value = '';
+
+      const notesDiv = document.getElementById('notesHistory');
+      notesDiv.innerHTML = '';
+      if (t.notes && t.notes.length > 0) {
+        t.notes.forEach(n => {
+          notesDiv.innerHTML += `<div class="bg-slate-50 p-2 rounded border text-xs"><p class="text-slate-700">${n.note_text}</p><span class="text-[10px] text-slate-400">${new Date(n.created_at).toLocaleString()}</span></div>`;
+        });
+      } else {
+        notesDiv.innerHTML = `<p class="text-xs text-slate-400 italic">No notes added yet.</p>`;
+      }
+
+      document.getElementById('detailModal').classList.remove('hidden');
+      document.getElementById('detailModal').classList.add('flex');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.remove('flex');
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    async function updateTicket(e) {
+      e.preventDefault();
+      const ticketId = document.getElementById('activeTicketId').value;
+      const status = document.getElementById('updateStatus').value;
+      const priority = document.getElementById('updatePriority').value;
+      const notes = document.getElementById('updateNotes').value;
+
+      const res = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, priority, notes })
+      });
+
+      if (res.ok) {
+        closeDetailModal();
+        loadDashboard();
+      } else {
+        alert('Failed to update ticket');
+      }
+    }
+  </script>
+</body>
+</html>
