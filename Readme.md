@@ -73,6 +73,6 @@ GET /api/tickets/:id — Fetches details and activity notes for a specific ticke
 PUT /api/tickets/:id — Updates status/priority and appends internal activity notes
 
 Demo Video & Live Application
-Live Deployed App: https://support-crm-g6zn.onrender.com/
+Live Deployed App: https://support-crm-jsz9.onrender.com/ 
 
 Demo Walkthrough Video: [Insert Loom/YouTube Video Link Here]
